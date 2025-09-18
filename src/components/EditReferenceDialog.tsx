@@ -24,6 +24,7 @@ interface Reference {
 interface EditReferenceForm {
   referencia: string;
   ingresoABodega?: string;
+  lanzamientoCapsula?: string;
   curva: string;
   cantidad: number;
 }
@@ -54,6 +55,7 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
       setValue("curva", reference.curva);
       setValue("cantidad", reference.cantidad);
       setValue("ingresoABodega", reference.ingreso_a_bodega || "");
+      setValue("lanzamientoCapsula", reference.lanzamiento_capsula || "");
     }
   }, [reference, open, setValue]);
 
@@ -66,6 +68,7 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
         .update({
           referencia: data.referencia,
           ingreso_a_bodega: data.ingresoABodega || null,
+          lanzamiento_capsula: data.lanzamientoCapsula || null,
           curva: data.curva,
           cantidad: data.cantidad
         })
@@ -132,6 +135,16 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
               id="ingresoABodega"
               type="date"
               {...register("ingresoABodega")}
+            />
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lanzamientoCapsula">Lanzamiento Cápsula</Label>
+            <Input
+              id="lanzamientoCapsula"
+              type="date"
+              {...register("lanzamientoCapsula")}
             />
             <p className="text-xs text-muted-foreground">Campo opcional</p>
           </div>
