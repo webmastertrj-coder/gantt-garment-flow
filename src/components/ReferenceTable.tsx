@@ -364,33 +364,33 @@ const ReferenceTable = () => {
                         );
                       }
 
-                      // Si la fecha actual es menor a la fecha de lanzamiento
-                      if (today < launchDate) {
-                        const daysUntilLaunch = Math.ceil((launchDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                        return (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning">
-                            {daysUntilLaunch} días para lanzar
-                          </span>
-                        );
+                      // Si la fecha inicial es mayor a la fecha de lanzamiento, mostrar días pendientes para lanzar
+                      if (today > launchDate) {
+                        const daysSinceLaunch = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
+                        const daysRemaining = Math.max(0, 21 - daysSinceLaunch);
+                        
+                        if (daysRemaining > 0) {
+                          return (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
+                              {daysRemaining} días restantes
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
+                              Desbloqueado
+                            </span>
+                          );
+                        }
                       }
 
-                      // Si ya pasó la fecha de lanzamiento, calcular días restantes de las 3 semanas (21 días)
-                      const daysSinceLaunch = Math.floor((today.getTime() - launchDate.getTime()) / (1000 * 60 * 60 * 24));
-                      const daysRemaining = Math.max(0, 21 - daysSinceLaunch);
-                      
-                      if (daysRemaining > 0) {
-                        return (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
-                            {daysRemaining} días restantes
-                          </span>
-                        );
-                      } else {
-                        return (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success/10 text-success">
-                            Desbloqueado
-                          </span>
-                        );
-                      }
+                      // Si la fecha actual es menor o igual a la fecha de lanzamiento
+                      const daysUntilLaunch = Math.ceil((launchDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                      return (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning">
+                          {daysUntilLaunch} días para lanzar
+                        </span>
+                      );
                     })()}
                   </td>
                   <td className="px-6 py-4">
