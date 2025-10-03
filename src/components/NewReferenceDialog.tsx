@@ -24,6 +24,7 @@ const curvaOptions = [
   { value: "XL-XXL-XXXL", label: "XL-XXL-XXXL" },
   { value: "XL-XXL-3XL", label: "XL-XXL-3XL" },
   { value: "28-30-32-34-36", label: "28-30-32-34-36" },
+  { value: "28-30-32-34-36-40", label: "28-30-32-34-36-40" },
   { value: "ONE-SIZE", label: "Talla Única" }
 ];
 
