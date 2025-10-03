@@ -39,7 +39,7 @@ interface EditReferenceDialogProps {
 const curvaOptions = [
   { value: "XS-S-M-L-XL", label: "XS-S-M-L-XL" },
   { value: "S-M-L-XL", label: "S-M-L-XL" },
-  { value: "L-XL-XXL", label: "L-XL-XXL" },
+  { value: "XL-XXL-XXXL", label: "XL-XXL-XXXL" },
   { value: "XL-XXL-3XL", label: "XL-XXL-3XL" },
   { value: "ONE-SIZE", label: "Talla Única" }
 ];
