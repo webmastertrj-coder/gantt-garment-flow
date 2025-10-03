@@ -21,7 +21,7 @@ interface NewReferenceForm {
 const curvaOptions = [
   { value: "XS-S-M-L-XL", label: "XS-S-M-L-XL" },
   { value: "S-M-L-XL", label: "S-M-L-XL" },
-  { value: "M-L-XL-XXL", label: "M-L-XL-XXL" },
+  { value: "XL-XXL-3XL", label: "XL-XXL-3XL" },
   { value: "ONE-SIZE", label: "Talla Única" }
 ];
 
