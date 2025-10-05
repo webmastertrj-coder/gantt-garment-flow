@@ -49,8 +49,8 @@ const IndexContent = () => {
   const fetchReferences = async () => {
     const { data, error } = await supabase
       .from('references')
-      .select('id, referencia, fecha_desbloqueo, lanzamiento_capsula, dias_desbloqueado')
-      .order('fecha_desbloqueo', { ascending: true });
+      .select('id, referencia, lanzamiento_capsula, ingreso_a_bodega')
+      .order('lanzamiento_capsula', { ascending: true });
 
     if (error) {
       console.error('Error fetching references:', error);
@@ -59,26 +59,43 @@ const IndexContent = () => {
 
     if (data) {
       const items = data
-        .filter(ref => ref.fecha_desbloqueo && ref.lanzamiento_capsula)
+        .filter(ref => ref.lanzamiento_capsula)
         .map(ref => {
-          const unlockDate = new Date(ref.fecha_desbloqueo!);
-          const launchDateObj = new Date(ref.lanzamiento_capsula!);
+          const parseDate = (s?: string | null) => {
+            if (!s) return null;
+            const [y, m, d] = s.split('-').map(Number);
+            if (!y || !m || !d) return null;
+            return new Date(y, m - 1, d);
+          };
+
+          const launchDate = parseDate(ref.lanzamiento_capsula);
+          const ingresoDate = parseDate(ref.ingreso_a_bodega);
           
-          // Calculate progress based on current date
+          if (!launchDate) return null;
+
+          // Calculate unlock date: base date + 21 days
+          const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
+          const unlockDate = new Date(baseDate);
+          unlockDate.setDate(unlockDate.getDate() + 21);
+          unlockDate.setHours(0, 0, 0, 0);
+
+          // Calculate progress
           const now = new Date();
-          const totalDays = (launchDateObj.getTime() - unlockDate.getTime()) / (1000 * 60 * 60 * 24);
-          const daysPassed = (now.getTime() - unlockDate.getTime()) / (1000 * 60 * 60 * 24);
-          const progress = Math.max(0, Math.min(100, (daysPassed / totalDays) * 100));
+          now.setHours(0, 0, 0, 0);
+          const totalDays = 21; // Fixed 21-day period
+          const daysSinceBase = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+          const progress = Math.max(0, Math.min(100, (daysSinceBase / totalDays) * 100));
 
           return {
             id: ref.referencia,
-            start: unlockDate,
-            end: launchDateObj,
+            start: baseDate,
+            end: unlockDate,
             progress: Math.round(progress)
           };
-        });
+        })
+        .filter(item => item !== null);
 
-      setGanttItems(items);
+      setGanttItems(items as any);
     }
   };
 

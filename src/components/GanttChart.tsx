@@ -14,14 +14,38 @@ interface GanttChartProps {
 const GanttChart = ({ items }: GanttChartProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // Generate timeline dates
+  // Generate timeline dates based on actual data
   const generateTimeline = () => {
+    if (items.length === 0) {
+      // Default timeline if no items
+      const dates = [];
+      const startDate = new Date();
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        dates.push(date);
+      }
+      return dates;
+    }
+
+    // Find min and max dates from items
+    let minDate = new Date(items[0].start);
+    let maxDate = new Date(items[0].end);
+
+    items.forEach(item => {
+      if (item.start < minDate) minDate = new Date(item.start);
+      if (item.end > maxDate) maxDate = new Date(item.end);
+    });
+
+    // Add buffer days
+    minDate.setDate(minDate.getDate() - 2);
+    maxDate.setDate(maxDate.getDate() + 2);
+
     const dates = [];
-    const startDate = new Date(2025, 8, 20); // Sep 20, 2025
-    for (let i = 0; i < 24; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      dates.push(date);
+    const currentDate = new Date(minDate);
+    while (currentDate <= maxDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     return dates;
   };
@@ -54,7 +78,10 @@ const GanttChart = ({ items }: GanttChartProps) => {
         {/* Timeline */}
         <div className="relative">
           <div className="flex justify-between text-sm text-muted-foreground mb-2">
-            {timeline.filter((_, i) => i % 6 === 0).map((date, i) => (
+            {timeline.length > 0 && timeline.filter((_, i) => {
+              const step = Math.max(1, Math.floor(timeline.length / 5));
+              return i % step === 0 || i === timeline.length - 1;
+            }).map((date, i) => (
               <span key={i}>{formatDate(date)}</span>
             ))}
           </div>
@@ -96,9 +123,14 @@ const GanttChart = ({ items }: GanttChartProps) => {
           </div>
           
           {/* Legend */}
-          <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-            <div className="w-3 h-3 bg-foreground rounded-sm"></div>
-            <span>Tiempo hasta Lanzamiento</span>
+          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gantt-primary rounded-sm"></div>
+              <span>Período de 21 días hasta desbloqueo</span>
+            </div>
+            <div className="text-muted-foreground/70">
+              Inicio: Fecha de lanzamiento/ingreso | Fin: Fecha de desbloqueo
+            </div>
           </div>
         </div>
       </div>
