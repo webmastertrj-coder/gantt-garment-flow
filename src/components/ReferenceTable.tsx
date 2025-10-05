@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown, Edit, Trash2, Search } from "lucide-react";
+import { ChevronUp, ChevronDown, Edit, Trash2, Search, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +20,7 @@ interface Reference {
   lanzamiento_capsula: string | null;
   fecha_desbloqueo: string | null;
   dias_desbloqueado: number | null;
+  imagen_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,8 @@ const ReferenceTable = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [referenceToDelete, setReferenceToDelete] = useState<Reference | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const { toast } = useToast();
@@ -345,6 +349,13 @@ const ReferenceTable = () => {
     setCurrentPage(page);
   };
 
+  const handleImageClick = (imageUrl: string | null) => {
+    if (imageUrl) {
+      setSelectedImage(imageUrl);
+      setImageDialogOpen(true);
+    }
+  };
+
   return (
     <div className="bg-card rounded-lg border border-border">
       <div className="p-6 border-b border-border">
@@ -404,6 +415,9 @@ const ReferenceTable = () => {
         <table className="w-full">
           <thead className="bg-table-header">
             <tr>
+              <th className="px-6 py-3 text-left">
+                <span className="text-sm font-medium text-foreground">Imagen</span>
+              </th>
               <th className="px-6 py-3 text-left">
                 <button 
                   onClick={() => handleSort('referencia')}
@@ -475,19 +489,37 @@ const ReferenceTable = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">
                   Cargando referencias...
                 </td>
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={9} className="px-6 py-8 text-center text-muted-foreground">
                   No se encontraron referencias
                 </td>
               </tr>
             ) : (
               paginatedData.map((item) => (
                 <tr key={item.id} className="border-b border-border hover:bg-table-hover transition-colors">
+                  <td className="px-6 py-4">
+                    {item.imagen_url ? (
+                      <button
+                        onClick={() => handleImageClick(item.imagen_url)}
+                        className="relative w-12 h-12 rounded-md overflow-hidden border border-border hover:border-primary transition-colors cursor-pointer"
+                      >
+                        <img 
+                          src={item.imagen_url} 
+                          alt={item.referencia}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ) : (
+                      <div className="w-12 h-12 rounded-md border border-border bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm font-mono text-foreground">
                     {item.referencia}
                   </td>
@@ -694,6 +726,20 @@ const ReferenceTable = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          {selectedImage && (
+            <div className="flex items-center justify-center p-4">
+              <img 
+                src={selectedImage} 
+                alt="Vista ampliada"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
