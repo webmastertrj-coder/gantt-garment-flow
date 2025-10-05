@@ -59,7 +59,7 @@ const IndexContent = () => {
 
     if (data) {
       const items = data
-        .filter(ref => ref.lanzamiento_capsula)
+        .filter(ref => ref.lanzamiento_capsula && ref.ingreso_a_bodega)
         .map(ref => {
           const parseDate = (s?: string | null) => {
             if (!s) return null;
@@ -71,25 +71,26 @@ const IndexContent = () => {
           const launchDate = parseDate(ref.lanzamiento_capsula);
           const ingresoDate = parseDate(ref.ingreso_a_bodega);
           
-          if (!launchDate) return null;
+          if (!launchDate || !ingresoDate) return null;
 
-          // Calculate unlock date: base date + 21 days
-          const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
-          const unlockDate = new Date(baseDate);
-          unlockDate.setDate(unlockDate.getDate() + 21);
-          unlockDate.setHours(0, 0, 0, 0);
+          // Start: Ingreso a bodega, End: Lanzamiento capsula
+          const startDate = new Date(ingresoDate);
+          const endDate = new Date(launchDate);
+          
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(0, 0, 0, 0);
 
-          // Calculate progress
+          // Calculate progress (how many days have passed from ingreso to today)
           const now = new Date();
           now.setHours(0, 0, 0, 0);
-          const totalDays = 21; // Fixed 21-day period
-          const daysSinceBase = Math.floor((now.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-          const progress = Math.max(0, Math.min(100, (daysSinceBase / totalDays) * 100));
+          const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysPassed = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+          const progress = totalDays > 0 ? Math.max(0, Math.min(100, (daysPassed / totalDays) * 100)) : 0;
 
           return {
             id: ref.referencia,
-            start: baseDate,
-            end: unlockDate,
+            start: startDate,
+            end: endDate,
             progress: Math.round(progress)
           };
         })

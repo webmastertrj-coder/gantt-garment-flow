@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 
 interface GanttItem {
   id: string;
@@ -12,7 +12,8 @@ interface GanttChartProps {
 }
 
 const GanttChart = ({ items }: GanttChartProps) => {
-  const chartRef = useRef<HTMLDivElement>(null);
+  const [hoveredItem, setHoveredItem] = useState<GanttItem | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // Generate timeline dates based on actual data
   const generateTimeline = () => {
@@ -67,6 +68,28 @@ const GanttChart = ({ items }: GanttChartProps) => {
   };
 
   const displayItems = items.length > 0 ? items : [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayPosition = timeline.length > 0 ? calculatePosition(today) : 0;
+
+  const handleMouseEnter = (item: GanttItem, e: React.MouseEvent) => {
+    setHoveredItem(item);
+    setMousePosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (hoveredItem) {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredItem(null);
+  };
+
+  const calculateDuration = (start: Date, end: Date) => {
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  };
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
@@ -87,38 +110,52 @@ const GanttChart = ({ items }: GanttChartProps) => {
           </div>
           
           {/* Gantt bars */}
-          <div className="relative min-h-[200px] bg-gantt-background rounded border border-border p-4">
+          <div 
+            className="relative min-h-[200px] bg-gantt-background rounded border border-border p-4"
+            onMouseMove={handleMouseMove}
+          >
             {displayItems.length === 0 ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 No hay referencias con fechas configuradas
               </div>
             ) : (
-              <div className="space-y-3">
-                {displayItems.map((item, index) => {
-                  const startPos = calculatePosition(item.start);
-                  const endPos = calculatePosition(item.end);
-                  const width = endPos - startPos;
-                  
-                  return (
-                    <div key={item.id} className="relative h-8">
-                      <div 
-                        className="absolute h-full bg-gantt-primary rounded-sm shadow-sm flex items-center justify-between px-2"
-                        style={{
-                          left: `${startPos}%`,
-                          width: `${width}%`
-                        }}
-                      >
-                        <span className="text-xs font-medium text-primary-foreground truncate">
-                          {item.id}
-                        </span>
-                        <span className="text-xs text-primary-foreground/80">
-                          {item.progress}%
-                        </span>
+              <>
+                {/* Today line */}
+                {todayPosition >= 0 && todayPosition <= 100 && (
+                  <div 
+                    className="absolute top-0 bottom-0 w-0.5 bg-yellow-500 z-10 pointer-events-none"
+                    style={{ left: `${todayPosition}%` }}
+                  >
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  {displayItems.map((item) => {
+                    const startPos = calculatePosition(item.start);
+                    const endPos = calculatePosition(item.end);
+                    const width = endPos - startPos;
+                    
+                    return (
+                      <div key={item.id} className="relative h-8">
+                        <div 
+                          className="absolute h-full bg-gantt-primary rounded-sm shadow-sm flex items-center justify-between px-2 cursor-pointer hover:bg-gantt-primary/80 transition-colors"
+                          style={{
+                            left: `${startPos}%`,
+                            width: `${width}%`
+                          }}
+                          onMouseEnter={(e) => handleMouseEnter(item, e)}
+                          onMouseLeave={handleMouseLeave}
+                        >
+                          <span className="text-xs font-medium text-primary-foreground truncate">
+                            {item.id}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
           
@@ -126,14 +163,33 @@ const GanttChart = ({ items }: GanttChartProps) => {
           <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-gantt-primary rounded-sm"></div>
-              <span>Período de 21 días hasta desbloqueo</span>
+              <span>Tiempo hasta Lanzamiento</span>
             </div>
-            <div className="text-muted-foreground/70">
-              Inicio: Fecha de lanzamiento/ingreso | Fin: Fecha de desbloqueo
+            <div className="flex items-center gap-2">
+              <div className="w-0.5 h-3 bg-yellow-500"></div>
+              <span>Hoy</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Tooltip */}
+      {hoveredItem && (
+        <div 
+          className="fixed z-50 bg-background border border-border rounded-lg shadow-lg p-4 pointer-events-none"
+          style={{
+            left: `${mousePosition.x + 10}px`,
+            top: `${mousePosition.y + 10}px`,
+          }}
+        >
+          <div className="font-semibold text-foreground mb-2">{hoveredItem.id}</div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div>Ingreso: {formatDate(hoveredItem.start)}</div>
+            <div>Lanzamiento: {formatDate(hoveredItem.end)}</div>
+            <div>Duración: {calculateDuration(hoveredItem.start, hoveredItem.end)} día(s)</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
