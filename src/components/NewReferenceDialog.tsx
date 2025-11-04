@@ -65,8 +65,8 @@ const NewReferenceDialog = () => {
 
   const selectedCurva = watch("curva");
   const selectedCantidadColores = watch("cantidadColores");
-  const selectedColor = watch("color");
-  const selectedColor2 = watch("color2");
+  const selectedColor = watch("color") || "";
+  const selectedColor2 = watch("color2") || "";
 
   useEffect(() => {
     if (!open) return;
@@ -284,7 +284,10 @@ const NewReferenceDialog = () => {
               <Label htmlFor="color">
                 {selectedCantidadColores === "2 colores" ? "Color 1" : "Color"}
               </Label>
-              <Select onValueChange={(value) => setValue("color", value)} value={selectedColor}>
+              <Select 
+                onValueChange={(value) => setValue("color", value)} 
+                value={selectedColor || undefined}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un color" />
                 </SelectTrigger>
@@ -303,7 +306,10 @@ const NewReferenceDialog = () => {
           {selectedCantidadColores === "2 colores" && (
             <div className="space-y-2">
               <Label htmlFor="color2">Color 2</Label>
-              <Select onValueChange={(value) => setValue("color2", value)} value={selectedColor2}>
+              <Select 
+                onValueChange={(value) => setValue("color2", value)} 
+                value={selectedColor2 || undefined}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona el segundo color" />
                 </SelectTrigger>

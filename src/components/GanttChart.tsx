@@ -60,7 +60,8 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
     }).replace('.', '');
   };
 
-  const calculatePosition = (date: Date) => {
+  const calculatePosition = (date: Date | undefined) => {
+    if (!date || !timeline[0] || !timeline[timeline.length - 1]) return 0;
     const startDate = timeline[0];
     const endDate = timeline[timeline.length - 1];
     const totalDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
@@ -139,6 +140,8 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
                   
                   <div className="space-y-3">
                     {displayItems.map((item) => {
+                      if (!item.start || !item.end) return null;
+                      
                       const startPos = calculatePosition(item.start);
                       const endPos = calculatePosition(item.end);
                       const width = endPos - startPos;
