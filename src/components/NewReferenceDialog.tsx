@@ -32,6 +32,28 @@ const curvaOptions = [
   { value: "ONE-SIZE", label: "Talla Única" }
 ];
 
+const colorOptions = [
+  "Rojo", "Vino Tinto", "Verde Militar", "Negro", "Rosa", "Azul Claro", "Camuflado",
+  "Azul Medio", "Azul Oscuro", "Hielo", "Amarillo", "Café", "Gris Claro", "Gris Oscuro",
+  "Blanco", "Beige", "Kaki", "Mandarina", "Arena", "Marfil", "Verde", "Morado", "Mostaza",
+  "Crema", "Dorado", "Plateado", "Cereza", "Fucsia", "Azul Rey", "Berenjena", "Terracota",
+  "Salmon", "Verde Claro", "Naranja", "Melon", "Semilla", "Gris Medio", "Caramelo",
+  "Avellana", "Ocre", "Carmel", "Guayaba", "Agua Marina", "Verde Jade", "Coral",
+  "Verde Menta", "Ladrillo", "Magenta", "Macadamia", "Champaña", "Canela", "Verde Oliva",
+  "Bambu", "Azul Turqueza", "Tabaco", "Camel", "Mora", "Orquidea", "Pink", "Almendra",
+  "Fucsia Neon", "Naranja Neon", "Verde Neon", "Malva", "Natural", "Verde Manzana",
+  "Confite", "Esmeralda", "Lima", "Azul", "Hortensia", "Pistacho", "Celeste", "Lila",
+  "Turquesa", "Marron", "Verde Esmeralda", "Ivory", "Durazno", "Rubor", "Avena", "Taupe",
+  "Verde Limon", "Mocca", "Cocoa", "Nude", "Curcuma", "Verde Botella", "Gris",
+  "Azul Cobalto", "Vainilla", "Palo De Rosa", "Lavanda", "Chocolate", "Navy",
+  "Azul Petroleo", "Matcha", "Piton Canela", "Cebra", "Piton Almendra", "Azul Nube",
+  "Estampado", "Cacao", "Pardo", "Dirty", "Rosa Pastel", "Plomo", "Animal Print",
+  "Animal Print Chocolate", "Animal Print Kaki", "Animal Print Negro", "Animal Print Almendra",
+  "Animal Print Blanco", "Animal Print Camel", "Animal Print Ivory", "Animal Print Beige",
+  "Animal Print Avena", "Animal Print Gris", "Animal Print Marron", "Cebra Negro",
+  "Cebra Beige", "Cebra Kaki", "Cebra Marron", "Cebra Almendra"
+];
+
 const NewReferenceDialog = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -42,6 +64,7 @@ const NewReferenceDialog = () => {
 
   const selectedCurva = watch("curva");
   const selectedCantidadColores = watch("cantidadColores");
+  const selectedColor = watch("color");
 
   useEffect(() => {
     if (!open) return;
@@ -248,13 +271,19 @@ const NewReferenceDialog = () => {
 
           <div className="space-y-2">
             <Label htmlFor="color">Color</Label>
-            <Input
-              id="color"
-              type="color"
-              {...register("color")}
-              className="h-10 cursor-pointer"
-            />
-            <p className="text-xs text-muted-foreground">Campo opcional - Selecciona un color</p>
+            <Select onValueChange={(value) => setValue("color", value)} value={selectedColor}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un color" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {colorOptions.map((color) => (
+                  <SelectItem key={color} value={color}>
+                    {color}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
           </div>
 
           <div className="space-y-2">
