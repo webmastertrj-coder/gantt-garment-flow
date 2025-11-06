@@ -1,8 +1,69 @@
 import { Download, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import * as XLSX from "xlsx";
 import NewReferenceDialog from "./NewReferenceDialog";
 
 const Header = () => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      const references = jsonData.map((row: any) => ({
+        referencia: row.referencia || row.Referencia,
+        cantidad: parseInt(row.cantidad || row.Cantidad) || 0,
+        curva: row.curva || row.Curva,
+        color: row.color || row.Color || null,
+        cantidad_colores: row.cantidad_colores || row["Cantidad Colores"] || null,
+        lanzamiento_capsula: row.lanzamiento_capsula || row["Lanzamiento Capsula"] || null,
+        ingreso_a_bodega: row.ingreso_a_bodega || row["Ingreso a Bodega"] || null,
+        fecha_desbloqueo: row.fecha_desbloqueo || row["Fecha Desbloqueo"] || null,
+        imagen_url: row.imagen_url || row["Imagen URL"] || null,
+      }));
+
+      const { error } = await supabase
+        .from("references")
+        .insert(references);
+
+      if (error) throw error;
+
+      toast({
+        title: "Importación exitosa",
+        description: `Se importaron ${references.length} referencias correctamente.`,
+      });
+
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      // Reload page to show new data
+      window.location.reload();
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      toast({
+        title: "Error al importar",
+        description: "Hubo un problema al importar el archivo CSV.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -14,7 +75,14 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleImportClick}>
             <Download className="h-4 w-4" />
             Importar CSV
           </Button>
