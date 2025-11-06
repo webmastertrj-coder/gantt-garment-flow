@@ -406,6 +406,8 @@ const ReferenceTable = () => {
         'Referencia': item.referencia,
         'Curva': item.curva,
         'Cantidad': item.cantidad,
+        'Color': item.color || '',
+        'Cantidad de Colores': item.cantidad_colores || '',
         'Ingreso a Bodega': item.ingreso_a_bodega || '',
         'Lanzamiento Cápsula': item.lanzamiento_capsula || '',
         'Fecha Desbloqueo': fechaDesbloqueo,
@@ -617,7 +619,7 @@ const ReferenceTable = () => {
                     {item.cantidad}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {item.color || '-'}
+                    {item.cantidad_colores || '-'}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {item.ingreso_a_bodega || '-'}
