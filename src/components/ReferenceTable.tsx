@@ -619,7 +619,15 @@ const ReferenceTable = () => {
                     {item.cantidad}
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
-                    {item.cantidad_colores || '-'}
+                    <div className="flex flex-col gap-1">
+                      {item.color && (
+                        <span className="font-medium text-foreground">{item.color}</span>
+                      )}
+                      {item.cantidad_colores && (
+                        <span className="text-xs">({item.cantidad_colores} colores)</span>
+                      )}
+                      {!item.color && !item.cantidad_colores && '-'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-muted-foreground">
                     {item.ingreso_a_bodega || '-'}
