@@ -11,18 +11,27 @@ const Header = () => {
   const { toast } = useToast();
 
   const handleImportClick = () => {
+    console.log("Import button clicked");
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    console.log("File selected:", file?.name);
+    
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
 
     try {
+      console.log("Reading file...");
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      console.log("Parsed data:", jsonData);
 
       const references = jsonData.map((row: any) => ({
         referencia: row.referencia || row.Referencia,
@@ -35,6 +44,8 @@ const Header = () => {
         fecha_desbloqueo: row.fecha_desbloqueo || row["Fecha Desbloqueo"] || null,
         imagen_url: row.imagen_url || row["Imagen URL"] || null,
       }));
+
+      console.log("References to insert:", references);
 
       const { error } = await supabase
         .from("references")
@@ -54,11 +65,11 @@ const Header = () => {
 
       // Reload page to show new data
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error importing CSV:", error);
       toast({
         title: "Error al importar",
-        description: "Hubo un problema al importar el archivo CSV.",
+        description: error?.message || "Hubo un problema al importar el archivo CSV.",
         variant: "destructive",
       });
     }
