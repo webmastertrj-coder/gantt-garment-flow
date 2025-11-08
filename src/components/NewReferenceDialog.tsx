@@ -219,132 +219,61 @@ const NewReferenceDialog = () => {
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="referencia">Referencia *</Label>
-              <Input
-                id="referencia"
-                placeholder="Ej: XiI5bZiVniqX9ZCP"
-                {...register("referencia", { 
-                  required: "La referencia es obligatoria" 
-                })}
-              />
-              {errors.referencia && (
-                <p className="text-sm text-destructive">{errors.referencia.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="curva">Curva *</Label>
-              <Select onValueChange={(value) => setValue("curva", value)} value={selectedCurva}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona una curva" />
-                </SelectTrigger>
-                <SelectContent>
-                  {curvaOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.curva && (
-                <p className="text-sm text-destructive">{errors.curva.message}</p>
-              )}
-              <input
-                type="hidden"
-                {...register("curva", { required: "La curva es obligatoria" })}
-              />
-            </div>
+          {/* Referencia */}
+          <div className="space-y-2">
+            <Label htmlFor="referencia">Referencia *</Label>
+            <Input
+              id="referencia"
+              placeholder="Ej: XiI5bZiVniqX9ZCP"
+              {...register("referencia", { 
+                required: "La referencia es obligatoria" 
+              })}
+            />
+            {errors.referencia && (
+              <p className="text-sm text-destructive">{errors.referencia.message}</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ingresoABodega">Ingreso a Bodega</Label>
-              <Input
-                id="ingresoABodega"
-                type="date"
-                {...register("ingresoABodega")}
-              />
-              <p className="text-xs text-muted-foreground">Campo opcional</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="cantidad">Cantidad *</Label>
-                {isAutoCalculated && (
-                  <div className="flex items-center gap-1 text-xs text-primary">
-                    <Calculator className="h-3 w-3" />
-                    <span>Auto-calculado</span>
-                  </div>
-                )}
-              </div>
-              <Input
-                id="cantidad"
-                type="number"
-                min="1"
-                placeholder="Ej: 75"
-                readOnly={isAutoCalculated}
-                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
-                {...register("cantidad", { 
-                  required: "La cantidad es obligatoria",
-                  min: { value: 1, message: "La cantidad debe ser mayor a 0" },
-                  valueAsNumber: true
-                })}
-              />
-              {errors.cantidad && (
-                <p className="text-sm text-destructive">{errors.cantidad.message}</p>
-              )}
-              {isAutoCalculated && (
-                <p className="text-xs text-muted-foreground">
-                  Calculado automáticamente según la curva y cantidad de colores
-                </p>
-              )}
-            </div>
+          {/* Curva */}
+          <div className="space-y-2">
+            <Label htmlFor="curva">Curva *</Label>
+            <Select onValueChange={(value) => setValue("curva", value)} value={selectedCurva}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona una curva" />
+              </SelectTrigger>
+              <SelectContent>
+                {curvaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.curva && (
+              <p className="text-sm text-destructive">{errors.curva.message}</p>
+            )}
+            <input
+              type="hidden"
+              {...register("curva", { required: "La curva es obligatoria" })}
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="cantidadColores">Cantidad de Colores</Label>
-              <Select onValueChange={(value) => setValue("cantidadColores", value)} value={selectedCantidadColores}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona cantidad de colores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1 color">1 color</SelectItem>
-                  <SelectItem value="2 colores">2 colores</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Campo opcional</p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="distribucion">Distribución</Label>
-                {isAutoCalculated && (
-                  <div className="flex items-center gap-1 text-xs text-primary">
-                    <Calculator className="h-3 w-3" />
-                    <span>Auto-calculado</span>
-                  </div>
-                )}
-              </div>
-              <Input
-                id="distribucion"
-                placeholder="Ej: 10-20-30-15"
-                readOnly={isAutoCalculated}
-                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
-                {...register("distribucion")}
-              />
-              {isAutoCalculated ? (
-                <p className="text-xs text-muted-foreground">
-                  Calculado automáticamente según la curva y cantidad de colores
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">Campo opcional</p>
-              )}
-            </div>
+          {/* Cantidad de Colores - Ancho completo */}
+          <div className="space-y-2">
+            <Label htmlFor="cantidadColores">Cantidad de Colores</Label>
+            <Select onValueChange={(value) => setValue("cantidadColores", value)} value={selectedCantidadColores}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona cantidad de colores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1 color">1 color</SelectItem>
+                <SelectItem value="2 colores">2 colores</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
           </div>
 
+          {/* Colores */}
           {selectedCantidadColores && selectedCantidadColores === "2 colores" ? (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -408,6 +337,79 @@ const NewReferenceDialog = () => {
               <p className="text-xs text-muted-foreground">Campo opcional</p>
             </div>
           ) : null}
+
+          {/* Cantidad y Distribución */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cantidad">Cantidad *</Label>
+                {isAutoCalculated && (
+                  <div className="flex items-center gap-1 text-xs text-primary">
+                    <Calculator className="h-3 w-3" />
+                    <span>Auto-calculado</span>
+                  </div>
+                )}
+              </div>
+              <Input
+                id="cantidad"
+                type="number"
+                min="1"
+                placeholder="Ej: 75"
+                readOnly={isAutoCalculated}
+                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
+                {...register("cantidad", { 
+                  required: "La cantidad es obligatoria",
+                  min: { value: 1, message: "La cantidad debe ser mayor a 0" },
+                  valueAsNumber: true
+                })}
+              />
+              {errors.cantidad && (
+                <p className="text-sm text-destructive">{errors.cantidad.message}</p>
+              )}
+              {isAutoCalculated && (
+                <p className="text-xs text-muted-foreground">
+                  Calculado automáticamente según la curva y cantidad de colores
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="distribucion">Distribución</Label>
+                {isAutoCalculated && (
+                  <div className="flex items-center gap-1 text-xs text-primary">
+                    <Calculator className="h-3 w-3" />
+                    <span>Auto-calculado</span>
+                  </div>
+                )}
+              </div>
+              <Input
+                id="distribucion"
+                placeholder="Ej: 10-20-30-15"
+                readOnly={isAutoCalculated}
+                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
+                {...register("distribucion")}
+              />
+              {isAutoCalculated ? (
+                <p className="text-xs text-muted-foreground">
+                  Calculado automáticamente según la curva y cantidad de colores
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Campo opcional</p>
+              )}
+            </div>
+          </div>
+
+          {/* Ingreso a Bodega */}
+          <div className="space-y-2">
+            <Label htmlFor="ingresoABodega">Ingreso a Bodega</Label>
+            <Input
+              id="ingresoABodega"
+              type="date"
+              {...register("ingresoABodega")}
+            />
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="imagen">Imagen de Referencia</Label>
