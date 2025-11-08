@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Calculator } from "lucide-react";
+import { calculateDistribution } from "@/lib/distributionCalculator";
 
 interface Reference {
   id: string;
@@ -17,6 +19,7 @@ interface Reference {
   lanzamiento_capsula: string | null;
   fecha_desbloqueo: string | null;
   dias_desbloqueado: number | null;
+  cantidad_colores: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +31,7 @@ interface EditReferenceForm {
   curva: string;
   cantidad: number;
   distribucion?: string;
+  cantidadColores?: string;
 }
 
 interface EditReferenceDialogProps {
@@ -52,8 +56,22 @@ const curvaOptions = [
 const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated }: EditReferenceDialogProps) => {
   const { toast } = useToast();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<EditReferenceForm>();
+  const [isAutoCalculated, setIsAutoCalculated] = useState(false);
 
   const selectedCurva = watch("curva");
+  const selectedCantidadColores = watch("cantidadColores");
+
+  useEffect(() => {
+    const result = calculateDistribution(selectedCurva, selectedCantidadColores);
+    
+    if (result) {
+      setValue("cantidad", result.total);
+      setValue("distribucion", result.distribution);
+      setIsAutoCalculated(true);
+    } else {
+      setIsAutoCalculated(false);
+    }
+  }, [selectedCurva, selectedCantidadColores, setValue]);
 
   useEffect(() => {
     if (reference && open) {
@@ -63,6 +81,7 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
       setValue("ingresoABodega", reference.ingreso_a_bodega || "");
       setValue("lanzamientoCapsula", reference.lanzamiento_capsula || "");
       setValue("distribucion", (reference as any).distribucion || "");
+      setValue("cantidadColores", reference.cantidad_colores || "");
     }
   }, [reference, open, setValue]);
 
@@ -78,7 +97,8 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
           lanzamiento_capsula: data.lanzamientoCapsula || null,
           curva: data.curva,
           cantidad: data.cantidad,
-          distribucion: data.distribucion || null
+          distribucion: data.distribucion || null,
+          cantidad_colores: data.cantidadColores || null
         })
         .eq('id', reference.id);
 
@@ -112,6 +132,7 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
     onOpenChange(newOpen);
     if (!newOpen) {
       reset();
+      setIsAutoCalculated(false);
     }
   };
 
@@ -181,12 +202,36 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cantidad">Cantidad *</Label>
+            <Label htmlFor="cantidadColores">Cantidad de Colores</Label>
+            <Select onValueChange={(value) => setValue("cantidadColores", value)} value={selectedCantidadColores}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona cantidad de colores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1 color">1 color</SelectItem>
+                <SelectItem value="2 colores">2 colores</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="cantidad">Cantidad *</Label>
+              {isAutoCalculated && (
+                <div className="flex items-center gap-1 text-xs text-primary">
+                  <Calculator className="h-3 w-3" />
+                  <span>Auto-calculado</span>
+                </div>
+              )}
+            </div>
             <Input
               id="cantidad"
               type="number"
               min="1"
               placeholder="Ej: 75"
+              readOnly={isAutoCalculated}
+              className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
               {...register("cantidad", { 
                 required: "La cantidad es obligatoria",
                 min: { value: 1, message: "La cantidad debe ser mayor a 0" },
@@ -196,16 +241,37 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
             {errors.cantidad && (
               <p className="text-sm text-destructive">{errors.cantidad.message}</p>
             )}
+            {isAutoCalculated && (
+              <p className="text-xs text-muted-foreground">
+                Calculado automáticamente según la curva y cantidad de colores
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="distribucion">Distribución</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="distribucion">Distribución</Label>
+              {isAutoCalculated && (
+                <div className="flex items-center gap-1 text-xs text-primary">
+                  <Calculator className="h-3 w-3" />
+                  <span>Auto-calculado</span>
+                </div>
+              )}
+            </div>
             <Input
               id="distribucion"
               placeholder="Ej: 10-20-30-15"
+              readOnly={isAutoCalculated}
+              className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
               {...register("distribucion")}
             />
-            <p className="text-xs text-muted-foreground">Campo opcional</p>
+            {isAutoCalculated ? (
+              <p className="text-xs text-muted-foreground">
+                Calculado automáticamente según la curva y cantidad de colores
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Campo opcional</p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3">

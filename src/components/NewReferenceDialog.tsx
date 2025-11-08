@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Upload, Clipboard } from "lucide-react";
+import { Plus, Upload, Clipboard, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useLaunchDate } from "@/contexts/LaunchDateContext";
+import { calculateDistribution } from "@/lib/distributionCalculator";
 
 interface NewReferenceForm {
   referencia: string;
@@ -62,6 +63,7 @@ const NewReferenceDialog = () => {
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pastedImage, setPastedImage] = useState<File | null>(null);
+  const [isAutoCalculated, setIsAutoCalculated] = useState(false);
   const { toast } = useToast();
   const { launchDate } = useLaunchDate();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<NewReferenceForm>();
@@ -70,6 +72,18 @@ const NewReferenceDialog = () => {
   const selectedCantidadColores = watch("cantidadColores");
   const selectedColor = watch("color") || "";
   const selectedColor2 = watch("color2") || "";
+
+  useEffect(() => {
+    const result = calculateDistribution(selectedCurva, selectedCantidadColores);
+    
+    if (result) {
+      setValue("cantidad", result.total);
+      setValue("distribucion", result.distribution);
+      setIsAutoCalculated(true);
+    } else {
+      setIsAutoCalculated(false);
+    }
+  }, [selectedCurva, selectedCantidadColores, setValue]);
 
   useEffect(() => {
     if (!open) return;
@@ -187,6 +201,7 @@ const NewReferenceDialog = () => {
     if (!newOpen) {
       reset();
       setPastedImage(null);
+      setIsAutoCalculated(false);
     }
   };
 
@@ -255,12 +270,22 @@ const NewReferenceDialog = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cantidad">Cantidad *</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="cantidad">Cantidad *</Label>
+                {isAutoCalculated && (
+                  <div className="flex items-center gap-1 text-xs text-primary">
+                    <Calculator className="h-3 w-3" />
+                    <span>Auto-calculado</span>
+                  </div>
+                )}
+              </div>
               <Input
                 id="cantidad"
                 type="number"
                 min="1"
                 placeholder="Ej: 75"
+                readOnly={isAutoCalculated}
+                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
                 {...register("cantidad", { 
                   required: "La cantidad es obligatoria",
                   min: { value: 1, message: "La cantidad debe ser mayor a 0" },
@@ -269,6 +294,11 @@ const NewReferenceDialog = () => {
               />
               {errors.cantidad && (
                 <p className="text-sm text-destructive">{errors.cantidad.message}</p>
+              )}
+              {isAutoCalculated && (
+                <p className="text-xs text-muted-foreground">
+                  Calculado automáticamente según la curva y cantidad de colores
+                </p>
               )}
             </div>
           </div>
@@ -289,13 +319,29 @@ const NewReferenceDialog = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="distribucion">Distribución</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="distribucion">Distribución</Label>
+                {isAutoCalculated && (
+                  <div className="flex items-center gap-1 text-xs text-primary">
+                    <Calculator className="h-3 w-3" />
+                    <span>Auto-calculado</span>
+                  </div>
+                )}
+              </div>
               <Input
                 id="distribucion"
                 placeholder="Ej: 10-20-30-15"
+                readOnly={isAutoCalculated}
+                className={isAutoCalculated ? "bg-muted/50 cursor-not-allowed" : ""}
                 {...register("distribucion")}
               />
-              <p className="text-xs text-muted-foreground">Campo opcional</p>
+              {isAutoCalculated ? (
+                <p className="text-xs text-muted-foreground">
+                  Calculado automáticamente según la curva y cantidad de colores
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Campo opcional</p>
+              )}
             </div>
           </div>
 
