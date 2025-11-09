@@ -28,6 +28,45 @@ const Header = () => {
     fileInputRef.current?.click();
   };
 
+  // Helper function to convert Excel serial date to ISO date string
+  const excelDateToISOString = (value: any): string | null => {
+    if (!value) return null;
+    
+    // If it's already a string in YYYY-MM-DD format, return it
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+      return value.split('T')[0]; // Remove time part if present
+    }
+    
+    // If it's a number (Excel serial date)
+    if (typeof value === 'number') {
+      // Excel dates start from 1900-01-01, but Excel incorrectly treats 1900 as a leap year
+      // So dates before March 1, 1900 need adjustment
+      const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+      const date = new Date(excelEpoch.getTime() + value * 86400000);
+      
+      // Format as YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Try to parse as Date object
+    try {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    } catch (e) {
+      console.error('Error parsing date:', value, e);
+    }
+    
+    return null;
+  };
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     console.log("File selected:", file?.name);
@@ -40,7 +79,7 @@ const Header = () => {
     try {
       console.log("Reading file...");
       const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
+      const workbook = XLSX.read(data, { cellDates: true });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
       
@@ -52,9 +91,9 @@ const Header = () => {
         curva: row.curva || row.Curva,
         color: row.color || row.Color || null,
         cantidad_colores: row.cantidad_colores || row["Cantidad Colores"] || null,
-        lanzamiento_capsula: row.lanzamiento_capsula || row["Lanzamiento Capsula"] || null,
-        ingreso_a_bodega: row.ingreso_a_bodega || row["Ingreso a Bodega"] || null,
-        fecha_desbloqueo: row.fecha_desbloqueo || row["Fecha Desbloqueo"] || null,
+        lanzamiento_capsula: excelDateToISOString(row.lanzamiento_capsula || row["Lanzamiento Capsula"]),
+        ingreso_a_bodega: excelDateToISOString(row.ingreso_a_bodega || row["Ingreso a Bodega"]),
+        fecha_desbloqueo: excelDateToISOString(row.fecha_desbloqueo || row["Fecha Desbloqueo"]),
         imagen_url: row.imagen_url || row["Imagen URL"] || null,
       }));
 
