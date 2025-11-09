@@ -125,30 +125,47 @@ const Header = () => {
 
       console.log("References to insert:", references);
 
-      const { error } = await supabase
+      const { data: insertedData, error } = await supabase
         .from("references")
-        .insert(references);
+        .insert(references)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
 
-      toast({
-        title: "Importación exitosa",
-        description: `Se importaron ${references.length} referencias correctamente.`,
-      });
+      console.log("Insert successful:", insertedData);
 
       // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
 
-      // Reload page to show new data
-      window.location.reload();
+      // Show success message
+      toast({
+        title: "✅ Importación exitosa",
+        description: `Se importaron ${references.length} referencias correctamente.`,
+        duration: 3000,
+      });
+
+      // Reload page after showing the toast
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error: any) {
       console.error("Error importing CSV:", error);
+      
+      // Reset input on error too
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
       toast({
-        title: "Error al importar",
+        title: "❌ Error al importar",
         description: error?.message || "Hubo un problema al importar el archivo CSV.",
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
