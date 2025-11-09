@@ -28,6 +28,20 @@ const Header = () => {
     fileInputRef.current?.click();
   };
 
+  // Valid curva values from database constraint
+  const validCurvaValues = [
+    'XS-S-M-L-XL',
+    'S-M-L-XL',
+    'S-M-L',
+    'XL-XXL-XXXL',
+    'XL-XXL-3XL',
+    '28-30-32-34-36',
+    '28-30-32-34-36-40',
+    '06-08-10-12-14',
+    'ONE-SIZE',
+    'M-L-XL-XXL'
+  ];
+
   // Helper function to convert Excel serial date to ISO date string
   const excelDateToISOString = (value: any): string | null => {
     if (!value) return null;
@@ -96,6 +110,18 @@ const Header = () => {
         fecha_desbloqueo: excelDateToISOString(row.fecha_desbloqueo || row["Fecha Desbloqueo"]),
         imagen_url: row.imagen_url || row["Imagen URL"] || null,
       }));
+
+      // Validate curva values
+      const invalidCurvas = references
+        .map((ref, index) => ({ ref, index: index + 2 })) // +2 because Excel rows start at 1 and have header
+        .filter(({ ref }) => !validCurvaValues.includes(ref.curva))
+        .map(({ ref, index }) => `Fila ${index}: "${ref.curva}"`);
+
+      if (invalidCurvas.length > 0) {
+        throw new Error(
+          `Valores de curva inválidos encontrados:\n${invalidCurvas.join('\n')}\n\nValores válidos: ${validCurvaValues.join(', ')}`
+        );
+      }
 
       console.log("References to insert:", references);
 
@@ -170,7 +196,9 @@ const Header = () => {
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li><span className="font-medium text-foreground">referencia</span> - Código de referencia</li>
                 <li><span className="font-medium text-foreground">cantidad</span> - Cantidad numérica</li>
-                <li><span className="font-medium text-foreground">curva</span> - Tallas (ej: XL-XXL-XXXL)</li>
+                <li>
+                  <span className="font-medium text-foreground">curva</span> - Tallas (valores válidos: XS-S-M-L-XL, S-M-L-XL, S-M-L, XL-XXL-XXXL, XL-XXL-3XL, 28-30-32-34-36, 28-30-32-34-36-40, 06-08-10-12-14, ONE-SIZE, M-L-XL-XXL)
+                </li>
               </ul>
             </div>
             
