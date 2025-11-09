@@ -1,10 +1,11 @@
-import { Download, BarChart3 } from "lucide-react";
+import { Download, BarChart3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import NewReferenceDialog from "./NewReferenceDialog";
+import ImportHistoryDialog from "./ImportHistoryDialog";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ const Header = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleImportClick = () => {
     setShowImportDialog(true);
@@ -90,6 +92,8 @@ const Header = () => {
       return;
     }
 
+    setIsImporting(true);
+
     try {
       console.log("Reading file...");
       const data = await file.arrayBuffer();
@@ -137,6 +141,13 @@ const Header = () => {
 
       console.log("Insert successful:", insertedData);
 
+      // Save to import history
+      await supabase.from("import_history").insert({
+        file_name: file.name,
+        records_count: references.length,
+        status: 'success',
+      });
+
       // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -156,6 +167,16 @@ const Header = () => {
     } catch (error: any) {
       console.error("Error importing CSV:", error);
       
+      // Save error to import history
+      if (file) {
+        await supabase.from("import_history").insert({
+          file_name: file.name,
+          records_count: 0,
+          status: 'error',
+          error_message: error?.message || "Error desconocido",
+        });
+      }
+      
       // Reset input on error too
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -167,6 +188,8 @@ const Header = () => {
         variant: "destructive",
         duration: 5000,
       });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -189,9 +212,25 @@ const Header = () => {
               onChange={handleFileChange}
               className="hidden"
             />
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleImportClick}>
-              <Download className="h-4 w-4" />
-              Importar CSV
+            <ImportHistoryDialog />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2" 
+              onClick={handleImportClick}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Importar CSV
+                </>
+              )}
             </Button>
             <NewReferenceDialog />
           </div>

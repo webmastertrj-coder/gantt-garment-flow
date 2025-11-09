@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      import_history: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          file_name: string
+          id: string
+          records_count: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          file_name: string
+          id?: string
+          records_count: number
+          status: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          file_name?: string
+          id?: string
+          records_count?: number
+          status?: string
+        }
+        Relationships: []
+      }
       references: {
         Row: {
           cantidad: number
