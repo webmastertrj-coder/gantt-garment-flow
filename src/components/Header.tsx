@@ -1,4 +1,4 @@
-import { Download, BarChart3, Loader2 } from "lucide-react";
+import { Download, BarChart3, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import NewReferenceDialog from "./NewReferenceDialog";
 import ImportHistoryDialog from "./ImportHistoryDialog";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,8 @@ const Header = () => {
   const { toast } = useToast();
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleImportClick = () => {
     setShowImportDialog(true);
@@ -245,6 +248,15 @@ const Header = () => {
               onChange={handleFileChange}
               className="hidden"
             />
+            <Button
+              variant={location.pathname === '/calendar' ? 'default' : 'outline'}
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate(location.pathname === '/calendar' ? '/' : '/calendar')}
+            >
+              <Calendar className="h-4 w-4" />
+              {location.pathname === '/calendar' ? 'Ver Gantt' : 'Calendario'}
+            </Button>
             <ImportHistoryDialog />
             <Button 
               variant="outline" 
