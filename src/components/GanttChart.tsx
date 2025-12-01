@@ -1,4 +1,13 @@
 import { useState } from "react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface GanttItem {
   id: string;
@@ -12,9 +21,12 @@ interface GanttChartProps {
   launchDate?: Date;
 }
 
+const ITEMS_PER_PAGE = 15;
+
 const GanttChart = ({ items, launchDate }: GanttChartProps) => {
   const [hoveredItem, setHoveredItem] = useState<GanttItem | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Generate timeline dates based on actual data
   const generateTimeline = () => {
@@ -69,7 +81,12 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
     return (daysSinceStart / totalDays) * 100;
   };
 
-  const displayItems = items.length > 0 ? items : [];
+  // Pagination logic
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const displayItems = items.length > 0 ? items.slice(startIndex, endIndex) : [];
+  
   const launchDateNormalized = launchDate ? new Date(launchDate) : null;
   if (launchDateNormalized) {
     launchDateNormalized.setHours(0, 0, 0, 0);
@@ -186,6 +203,60 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
                 <span>Fecha de Lanzamiento</span>
               </div>
             </div>
+
+            {/* Pagination */}
+            {items.length > ITEMS_PER_PAGE && (
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando {startIndex + 1}-{Math.min(endIndex, items.length)} de {items.length} referencias
+                </div>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => setCurrentPage(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      } else if (page === currentPage - 2 || page === currentPage + 2) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      return null;
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </div>
         )}
       </div>
