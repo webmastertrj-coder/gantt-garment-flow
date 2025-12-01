@@ -1,4 +1,4 @@
-import { Download, BarChart3, Loader2, Calendar } from "lucide-react";
+import { Download, BarChart3, Loader2, Calendar, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -249,13 +249,31 @@ const Header = () => {
               className="hidden"
             />
             <Button
+              variant={location.pathname === '/' ? 'default' : 'outline'}
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/')}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Gantt
+            </Button>
+            <Button
               variant={location.pathname === '/calendar' ? 'default' : 'outline'}
               size="sm"
               className="gap-2"
-              onClick={() => navigate(location.pathname === '/calendar' ? '/' : '/calendar')}
+              onClick={() => navigate('/calendar')}
             >
               <Calendar className="h-4 w-4" />
-              {location.pathname === '/calendar' ? 'Ver Gantt' : 'Calendario'}
+              Calendario
+            </Button>
+            <Button
+              variant={location.pathname === '/cards' ? 'default' : 'outline'}
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/cards')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Cards
             </Button>
             <ImportHistoryDialog />
             <Button 
