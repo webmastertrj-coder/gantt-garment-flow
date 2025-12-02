@@ -79,7 +79,7 @@ const ReferenceTable = () => {
 
       const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
       const unlockDate = new Date(baseDate);
-      unlockDate.setDate(unlockDate.getDate() + 21);
+      unlockDate.setDate(unlockDate.getDate() + 14);
       unlockDate.setHours(0, 0, 0, 0);
 
       const diffTime = unlockDate.getTime() - today.getTime();
@@ -286,7 +286,7 @@ const ReferenceTable = () => {
         } else {
           const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
           const unlockDate = new Date(baseDate);
-          unlockDate.setDate(unlockDate.getDate() + 21);
+          unlockDate.setDate(unlockDate.getDate() + 14);
           unlockDate.setHours(0, 0, 0, 0);
           
           const isUnlocked = today >= unlockDate;
@@ -300,7 +300,7 @@ const ReferenceTable = () => {
       if (monthFilter !== 'all' && launchDate) {
         const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
         const unlockDate = new Date(baseDate);
-        unlockDate.setDate(unlockDate.getDate() + 21);
+        unlockDate.setDate(unlockDate.getDate() + 14);
         const month = unlockDate.getMonth();
         
         if (monthFilter === 'september' && month !== 8) return false;
@@ -312,7 +312,7 @@ const ReferenceTable = () => {
       if (dayFilter !== 'all' && launchDate) {
         const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
         const unlockDate = new Date(baseDate);
-        unlockDate.setDate(unlockDate.getDate() + 21);
+        unlockDate.setDate(unlockDate.getDate() + 14);
         unlockDate.setHours(0, 0, 0, 0);
         
         const diffTime = unlockDate.getTime() - today.getTime();
@@ -380,7 +380,7 @@ const ReferenceTable = () => {
       if (launchDate) {
         const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
         const unlockDate = new Date(baseDate);
-        unlockDate.setDate(unlockDate.getDate() + 21);
+        unlockDate.setDate(unlockDate.getDate() + 14);
         fechaDesbloqueo = unlockDate.toLocaleDateString('es-ES');
       }
 
@@ -398,7 +398,7 @@ const ReferenceTable = () => {
           diasEstado = `${daysUntilBase} días para ingresar`;
         } else {
           const daysSinceBase = Math.floor((today.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-          const daysRemaining = Math.max(0, 21 - daysSinceBase);
+          const daysRemaining = Math.max(0, 14 - daysSinceBase);
           diasEstado = daysRemaining > 0 ? `${daysRemaining} días restantes` : 'Desbloqueado';
         }
       }
@@ -659,7 +659,7 @@ const ReferenceTable = () => {
                       // Base para el desbloqueo: si el ingreso es posterior al lanzamiento, usar ingreso; de lo contrario, lanzamiento
                       const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
                       const unlockDate = new Date(baseDate);
-                      unlockDate.setDate(unlockDate.getDate() + 21);
+                      unlockDate.setDate(unlockDate.getDate() + 14);
                       return unlockDate.toLocaleDateString('es-ES');
                     })()}
                   </td>
@@ -693,7 +693,7 @@ const ReferenceTable = () => {
                         );
                       }
 
-                      // Después del lanzamiento: el conteo de 21 días comienza en la fecha base
+                      // Después del lanzamiento: el conteo de 14 días comienza en la fecha base
                       // Si el ingreso es posterior al lanzamiento, la base es la fecha de ingreso; si no, es la fecha de lanzamiento
                       const baseDate = ingresoDate && ingresoDate > launchDate ? ingresoDate : launchDate;
 
@@ -708,7 +708,7 @@ const ReferenceTable = () => {
                       }
 
                       const daysSinceBase = Math.floor((today.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-                      const daysRemaining = Math.max(0, 21 - daysSinceBase);
+                      const daysRemaining = Math.max(0, 14 - daysSinceBase);
                       
                       if (daysRemaining > 0) {
                         return (
