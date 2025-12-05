@@ -132,33 +132,23 @@ const CardViewContent = () => {
                     </div>}
                 </div>
 
-                {/* Info */}
-                <div className="space-y-3 pt-2">
-                  {ref.distribucion && <div className="flex items-start gap-3">
-                      <LayoutGrid className="w-4 h-4 mt-0.5 text-orange-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Distribución
-                        </p>
-                        <p className="text-sm font-semibold text-foreground">
-                          {ref.distribucion}
-                        </p>
-                      </div>
-                    </div>}
+                {/* Info - 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  {/* Left column */}
+                  <div className="flex items-start gap-2">
+                    <LayoutGrid className="w-4 h-4 mt-0.5 text-orange-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Distribución
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {ref.distribucion || '-'}
+                      </p>
+                    </div>
+                  </div>
 
-                  {ref.ubicacion && <div className="flex items-start gap-3">
-                      <MapPin className="w-4 h-4 mt-0.5 text-violet-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Ubicación
-                        </p>
-                        <p className="text-sm font-semibold text-foreground">
-                          {ref.ubicacion}
-                        </p>
-                      </div>
-                    </div>}
-
-                  <div className="flex items-start gap-3">
+                  {/* Right column */}
+                  <div className="flex items-start gap-2">
                     <Calendar className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground">
@@ -170,7 +160,21 @@ const CardViewContent = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
+                  {/* Left column */}
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5 text-violet-500 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Ubicación
+                      </p>
+                      <p className="text-sm font-semibold text-foreground">
+                        {ref.ubicacion || '-'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right column */}
+                  <div className="flex items-start gap-2">
                     <Unlock className="w-4 h-4 mt-0.5 text-success flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-muted-foreground">
