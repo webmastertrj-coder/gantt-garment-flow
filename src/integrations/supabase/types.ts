@@ -56,6 +56,7 @@ export type Database = {
           ingreso_a_bodega: string | null
           lanzamiento_capsula: string | null
           referencia: string
+          ubicacion: string | null
           updated_at: string
         }
         Insert: {
@@ -72,6 +73,7 @@ export type Database = {
           ingreso_a_bodega?: string | null
           lanzamiento_capsula?: string | null
           referencia: string
+          ubicacion?: string | null
           updated_at?: string
         }
         Update: {
@@ -88,6 +90,7 @@ export type Database = {
           ingreso_a_bodega?: string | null
           lanzamiento_capsula?: string | null
           referencia?: string
+          ubicacion?: string | null
           updated_at?: string
         }
         Relationships: []
