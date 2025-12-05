@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Unlock } from "lucide-react";
+import { Calendar, Unlock, MapPin, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -17,6 +17,8 @@ interface Reference {
   imagen_url: string | null;
   curva: string;
   color: string | null;
+  ubicacion: string | null;
+  distribucion: string | null;
 }
 
 const CardViewContent = () => {
@@ -51,7 +53,7 @@ const CardViewContent = () => {
     try {
       const { data, error } = await supabase
         .from('references')
-        .select('id, referencia, lanzamiento_capsula, ingreso_a_bodega, imagen_url, curva, color')
+        .select('id, referencia, lanzamiento_capsula, ingreso_a_bodega, imagen_url, curva, color, ubicacion, distribucion')
         .order('lanzamiento_capsula', { ascending: true });
 
       if (error) throw error;
@@ -167,8 +169,36 @@ const CardViewContent = () => {
                   )}
                 </div>
 
-                {/* Dates */}
+                {/* Info */}
                 <div className="space-y-3 pt-2">
+                  {ref.distribucion && (
+                    <div className="flex items-start gap-3">
+                      <LayoutGrid className="w-4 h-4 mt-0.5 text-orange-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Distribución
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {ref.distribucion}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {ref.ubicacion && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-4 h-4 mt-0.5 text-violet-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Ubicación
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">
+                          {ref.ubicacion}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-3">
                     <Calendar className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
                     <div className="flex-1 min-w-0">
