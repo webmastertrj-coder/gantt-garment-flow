@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LaunchDateProvider } from "@/contexts/LaunchDateContext";
 import Header from "@/components/Header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Unlock, MapPin, LayoutGrid } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Unlock, MapPin, LayoutGrid, Search, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+
 interface Reference {
   id: string;
   referencia: string;
@@ -22,6 +25,25 @@ interface Reference {
 const CardViewContent = () => {
   const [references, setReferences] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchRef, setSearchRef] = useState("");
+  const [filterUbicacion, setFilterUbicacion] = useState("all");
+
+  // Get unique ubicaciones for the filter dropdown
+  const ubicaciones = useMemo(() => {
+    const unique = [...new Set(references.map(r => r.ubicacion).filter(Boolean))] as string[];
+    return unique.sort();
+  }, [references]);
+
+  // Filter references based on search and filter
+  const filteredReferences = useMemo(() => {
+    return references.filter(ref => {
+      const matchesSearch = searchRef === "" || 
+        ref.referencia.toLowerCase().includes(searchRef.toLowerCase());
+      const matchesUbicacion = filterUbicacion === "all" || ref.ubicacion === filterUbicacion;
+      return matchesSearch && matchesUbicacion;
+    });
+  }, [references, searchRef, filterUbicacion]);
+
   useEffect(() => {
     fetchReferences();
 
@@ -102,12 +124,39 @@ const CardViewContent = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground">Referencias</h1>
           <p className="text-muted-foreground mt-1">
-            {references.length} referencias totales
+            {filteredReferences.length} de {references.length} referencias
           </p>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar referencia..."
+              value={searchRef}
+              onChange={(e) => setSearchRef(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <Select value={filterUbicacion} onValueChange={setFilterUbicacion}>
+              <SelectTrigger>
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Ubicación" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">Todas las ubicaciones</SelectItem>
+                {ubicaciones.map((ub) => (
+                  <SelectItem key={ub} value={ub}>{ub}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {references.map(ref => <Card key={ref.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-border bg-card">
+          {filteredReferences.map(ref => <Card key={ref.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-border bg-card">
               <CardHeader className="space-y-2 pb-4">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-xl font-semibold text-card-foreground">
@@ -190,8 +239,10 @@ const CardViewContent = () => {
             </Card>)}
         </div>
 
-        {references.length === 0 && <div className="text-center py-12">
-            <p className="text-muted-foreground">No hay referencias para mostrar</p>
+        {filteredReferences.length === 0 && <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {references.length === 0 ? "No hay referencias para mostrar" : "No se encontraron referencias con los filtros aplicados"}
+            </p>
           </div>}
       </main>
     </div>;
