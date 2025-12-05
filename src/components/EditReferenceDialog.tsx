@@ -176,6 +176,16 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="ubicacion">Ubicación</Label>
+            <Input
+              id="ubicacion"
+              placeholder="Ej: Bodega A, Estante 3"
+              {...register("ubicacion")}
+            />
+            <p className="text-xs text-muted-foreground">Campo opcional</p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="lanzamientoCapsula">Lanzamiento Cápsula</Label>
             <Input
               id="lanzamientoCapsula"
@@ -281,15 +291,6 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ubicacion">Ubicación</Label>
-            <Input
-              id="ubicacion"
-              placeholder="Ej: Bodega A, Estante 3"
-              {...register("ubicacion")}
-            />
-            <p className="text-xs text-muted-foreground">Campo opcional</p>
-          </div>
 
           <div className="flex justify-end gap-3">
             <Button 
