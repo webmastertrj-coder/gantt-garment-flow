@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LaunchDateProvider } from "@/contexts/LaunchDateContext";
 import Header from "@/components/Header";
+import EditReferenceDialog from "@/components/EditReferenceDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,12 +22,20 @@ interface Reference {
   color: string | null;
   ubicacion: string | null;
   distribucion: string | null;
+  cantidad: number;
+  cantidad_colores: string | null;
+  fecha_desbloqueo: string | null;
+  dias_desbloqueado: number | null;
+  created_at: string;
+  updated_at: string;
 }
 const CardViewContent = () => {
   const [references, setReferences] = useState<Reference[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchRef, setSearchRef] = useState("");
   const [filterUbicacion, setFilterUbicacion] = useState("all");
+  const [selectedReference, setSelectedReference] = useState<Reference | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Get unique ubicaciones for the filter dropdown
   const ubicaciones = useMemo(() => {
@@ -64,7 +73,7 @@ const CardViewContent = () => {
       const {
         data,
         error
-      } = await supabase.from('references').select('id, referencia, lanzamiento_capsula, ingreso_a_bodega, imagen_url, curva, color, ubicacion, distribucion').order('lanzamiento_capsula', {
+      } = await supabase.from('references').select('*').order('lanzamiento_capsula', {
         ascending: true
       });
       if (error) throw error;
@@ -99,6 +108,11 @@ const CardViewContent = () => {
     const unlockDate = new Date(baseDate);
     unlockDate.setDate(unlockDate.getDate() + 14);
     return unlockDate.toISOString().split('T')[0];
+  };
+
+  const handleCardClick = (ref: Reference) => {
+    setSelectedReference(ref);
+    setEditDialogOpen(true);
   };
   if (loading) {
     return <div className="min-h-screen bg-background">
@@ -156,7 +170,7 @@ const CardViewContent = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredReferences.map(ref => <Card key={ref.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-border bg-card">
+          {filteredReferences.map(ref => <Card key={ref.id} onClick={() => handleCardClick(ref)} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-border bg-card cursor-pointer">
               <CardHeader className="space-y-2 pb-4">
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-xl font-semibold text-card-foreground">
@@ -244,6 +258,13 @@ const CardViewContent = () => {
               {references.length === 0 ? "No hay referencias para mostrar" : "No se encontraron referencias con los filtros aplicados"}
             </p>
           </div>}
+
+        <EditReferenceDialog
+          reference={selectedReference}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          onReferenceUpdated={fetchReferences}
+        />
       </main>
     </div>;
 };
