@@ -500,7 +500,7 @@ const ReferenceTable = () => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-max">
           <thead className="bg-table-header">
             <tr>
               <th className="px-6 py-3 text-left">
