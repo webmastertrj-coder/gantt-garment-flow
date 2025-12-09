@@ -128,10 +128,10 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
             {/* Gantt chart with labels on left */}
             <div className="flex gap-4">
               {/* Reference names column */}
-              <div className="w-32 flex-shrink-0 space-y-3 pt-8">
+              <div className="w-48 flex-shrink-0 space-y-3 pt-8">
                 {displayItems.map((item) => (
                   <div key={item.id} className="h-8 flex items-center">
-                    <span className="text-sm font-medium text-foreground truncate">
+                    <span className="text-sm font-medium text-foreground whitespace-nowrap">
                       {item.id}
                     </span>
                   </div>
