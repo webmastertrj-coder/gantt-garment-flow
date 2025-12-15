@@ -17,9 +17,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<CardView />} />
+          <Route path="/gantt" element={<Index />} />
           <Route path="/calendar" element={<CalendarView />} />
-          <Route path="/cards" element={<CardView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -254,6 +254,15 @@ const Header = () => {
               className="gap-2"
               onClick={() => navigate('/')}
             >
+              <LayoutGrid className="h-4 w-4" />
+              Cards
+            </Button>
+            <Button
+              variant={location.pathname === '/gantt' ? 'default' : 'outline'}
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/gantt')}
+            >
               <BarChart3 className="h-4 w-4" />
               Gantt
             </Button>
@@ -265,15 +274,6 @@ const Header = () => {
             >
               <Calendar className="h-4 w-4" />
               Calendario
-            </Button>
-            <Button
-              variant={location.pathname === '/cards' ? 'default' : 'outline'}
-              size="sm"
-              className="gap-2"
-              onClick={() => navigate('/cards')}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Cards
             </Button>
             <ImportHistoryDialog />
             <Button 
