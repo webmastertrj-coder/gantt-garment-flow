@@ -455,18 +455,15 @@ const ReferenceTable = () => {
       const quantities = item.distribucion!.split('-').map(Number);
       const colors = item.color!.split('-').map(c => c.trim());
       
-      // Por cada talla y cada color, crear una fila
-      sizes.forEach((size, sizeIndex) => {
-        const quantityPerSize = quantities[sizeIndex] || 0;
-        
-        colors.forEach(color => {
-          // La cantidad se divide entre los colores
-          const quantityPerColor = Math.floor(quantityPerSize / colors.length);
+      // Por cada color, crear filas separadas con todas las tallas
+      colors.forEach(color => {
+        sizes.forEach((size, sizeIndex) => {
+          const quantityPerSize = quantities[sizeIndex] || 0;
           
-          if (quantityPerColor > 0) {
+          if (quantityPerSize > 0) {
             exportRows.push({
               'StrProducto': item.referencia,
-              'IntCantidaddoc': quantityPerColor,
+              'IntCantidaddoc': quantityPerSize,
               'IntvalorUnitario': 0,
               'IntBodega': '01',
               'StrLote': size,
