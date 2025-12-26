@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNotification } from "@/hooks/use-notification";
@@ -45,6 +46,8 @@ const ReferenceTable = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [referenceToDelete, setReferenceToDelete] = useState<Reference | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -234,6 +237,72 @@ const ReferenceTable = () => {
       toast({
         title: "Error",
         description: "Hubo un error inesperado al eliminar la referencia.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Bulk delete handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(paginatedData.map(item => item.id));
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+
+    try {
+      const idsToDelete = Array.from(selectedIds);
+      const { error } = await supabase
+        .from('references')
+        .delete()
+        .in('id', idsToDelete);
+
+      if (error) {
+        console.error('Error deleting references:', error);
+        toast({
+          title: "Error",
+          description: "Hubo un error al eliminar las referencias.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Referencias eliminadas",
+        description: `Se han eliminado ${idsToDelete.length} referencias exitosamente.`,
+      });
+
+      // Remove from local state
+      setData(prevData => prevData.filter(ref => !selectedIds.has(ref.id)));
+      setSelectedIds(new Set());
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting references:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error inesperado al eliminar las referencias.",
         variant: "destructive"
       });
     }
@@ -498,6 +567,17 @@ const ReferenceTable = () => {
             Detalles de la Referencia
           </h2>
           <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="gap-2"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+                Eliminar ({selectedIds.size})
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="sm" 
@@ -573,6 +653,12 @@ const ReferenceTable = () => {
         <table className="w-full min-w-max">
           <thead className="bg-table-header">
             <tr>
+              <th className="px-4 py-3 text-left">
+                <Checkbox 
+                  checked={paginatedData.length > 0 && paginatedData.every(item => selectedIds.has(item.id))}
+                  onCheckedChange={handleSelectAll}
+                />
+              </th>
               <th className="px-6 py-3 text-left">
                 <span className="text-sm font-medium text-foreground">Imagen</span>
               </th>
@@ -653,19 +739,25 @@ const ReferenceTable = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={11} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={12} className="px-6 py-8 text-center text-muted-foreground">
                   Cargando referencias...
                 </td>
               </tr>
             ) : paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-6 py-8 text-center text-muted-foreground">
+                <td colSpan={12} className="px-6 py-8 text-center text-muted-foreground">
                   No se encontraron referencias
                 </td>
               </tr>
             ) : (
               paginatedData.map((item) => (
                 <tr key={item.id} className="border-b border-border hover:bg-table-hover transition-colors">
+                  <td className="px-4 py-4">
+                    <Checkbox 
+                      checked={selectedIds.has(item.id)}
+                      onCheckedChange={() => handleToggleSelect(item.id)}
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     {item.imagen_url ? (
                       <button
@@ -900,6 +992,24 @@ const ReferenceTable = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar {selectedIds.size} referencias?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán permanentemente{" "}
+              <strong>{selectedIds.size} referencias</strong> de la base de datos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulkDelete} className="bg-destructive hover:bg-destructive/90">
+              Eliminar todas
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
