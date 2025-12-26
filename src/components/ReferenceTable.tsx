@@ -453,7 +453,8 @@ const ReferenceTable = () => {
     refsWithDistribution.forEach(item => {
       const sizes = item.curva.split('-');
       const quantities = item.distribucion!.split('-').map(Number);
-      const colors = item.color!.split('-').map(c => c.trim());
+      // Los colores pueden estar separados por coma o guión
+      const colors = item.color!.split(/[,\-]/).map(c => c.trim()).filter(c => c.length > 0);
       
       // Por cada color, crear filas separadas con todas las tallas
       colors.forEach(color => {
