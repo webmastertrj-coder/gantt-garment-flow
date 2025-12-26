@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown, Edit, Trash2, Search, ImageIcon, FileSpreadsheet } from "lucide-react";
+import { ChevronUp, ChevronDown, Edit, Trash2, Search, ImageIcon, FileSpreadsheet, TableProperties } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -432,6 +432,83 @@ const ReferenceTable = () => {
     });
   };
 
+  const handleExportDistribution = () => {
+    // Filtrar solo referencias con distribución asignada
+    const refsWithDistribution = filteredAndSortedData.filter(
+      item => item.distribucion && item.curva
+    );
+
+    if (refsWithDistribution.length === 0) {
+      toast({
+        title: "Sin datos",
+        description: "No hay referencias con distribución asignada para exportar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Determinar todas las tallas únicas y ordenarlas
+    const allSizes = new Set<string>();
+    refsWithDistribution.forEach(item => {
+      const sizes = item.curva.split('-');
+      sizes.forEach(size => allSizes.add(size));
+    });
+
+    // Ordenar tallas de forma lógica
+    const sizeOrder: Record<string, number> = {
+      'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, 'XXXL': 7, '3XL': 7,
+      '04': 10, '06': 11, '08': 12, '10': 13, '12': 14, '14': 15, '16': 16, '18': 17, '20': 18, '22': 19,
+      '28': 20, '30': 21, '32': 22, '34': 23, '36': 24, '38': 25, '40': 26,
+      'ONE-SIZE': 100
+    };
+    
+    const sortedSizes = Array.from(allSizes).sort((a, b) => {
+      const orderA = sizeOrder[a] ?? 50;
+      const orderB = sizeOrder[b] ?? 50;
+      return orderA - orderB;
+    });
+
+    // Crear filas de datos
+    const exportRows: Record<string, string | number>[] = [];
+    
+    refsWithDistribution.forEach(item => {
+      const sizes = item.curva.split('-');
+      const quantities = item.distribucion!.split('-').map(Number);
+      
+      // Crear objeto base con REF y COLOR
+      const row: Record<string, string | number> = {
+        'REF': item.referencia,
+        'COLOR': item.color || ''
+      };
+
+      // Agregar columnas de tallas con sus cantidades
+      sortedSizes.forEach(size => {
+        const sizeIndex = sizes.indexOf(size);
+        row[size] = sizeIndex !== -1 ? quantities[sizeIndex] || 0 : '';
+      });
+
+      // Agregar TOT y CURVA
+      row['TOT'] = item.cantidad;
+      row['CURVA'] = item.curva;
+
+      exportRows.push(row);
+    });
+
+    // Crear libro de trabajo
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Distribución');
+
+    // Generar archivo Excel
+    const fileName = `distribucion_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+    toast({
+      title: "Exportación exitosa",
+      description: `Se han exportado ${exportRows.length} referencias con distribución.`,
+    });
+  };
+
   return (
     <div className="bg-card rounded-lg border border-border">
       <div className="p-6 border-b border-border">
@@ -439,16 +516,28 @@ const ReferenceTable = () => {
           <h2 className="text-lg font-semibold text-foreground">
             Detalles de la Referencia
           </h2>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2"
-            onClick={handleExportToExcel}
-            disabled={filteredAndSortedData.length === 0}
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Exportar a Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleExportToExcel}
+              disabled={filteredAndSortedData.length === 0}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Exportar a Excel
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleExportDistribution}
+              disabled={filteredAndSortedData.length === 0}
+            >
+              <TableProperties className="h-4 w-4" />
+              Exportar Distribución
+            </Button>
+          </div>
         </div>
         
         <div className="flex gap-4 items-center flex-wrap">
