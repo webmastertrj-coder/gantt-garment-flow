@@ -435,77 +435,60 @@ const ReferenceTable = () => {
   const handleExportDistribution = () => {
     // Filtrar solo referencias con distribución asignada
     const refsWithDistribution = filteredAndSortedData.filter(
-      item => item.distribucion && item.curva
+      item => item.distribucion && item.curva && item.color
     );
 
     if (refsWithDistribution.length === 0) {
       toast({
         title: "Sin datos",
-        description: "No hay referencias con distribución asignada para exportar.",
+        description: "No hay referencias con distribución y color asignados para exportar.",
         variant: "destructive"
       });
       return;
     }
 
-    // Determinar todas las tallas únicas y ordenarlas
-    const allSizes = new Set<string>();
-    refsWithDistribution.forEach(item => {
-      const sizes = item.curva.split('-');
-      sizes.forEach(size => allSizes.add(size));
-    });
-
-    // Ordenar tallas de forma lógica
-    const sizeOrder: Record<string, number> = {
-      'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6, 'XXXL': 7, '3XL': 7,
-      '04': 10, '06': 11, '08': 12, '10': 13, '12': 14, '14': 15, '16': 16, '18': 17, '20': 18, '22': 19,
-      '28': 20, '30': 21, '32': 22, '34': 23, '36': 24, '38': 25, '40': 26,
-      'ONE-SIZE': 100
-    };
-    
-    const sortedSizes = Array.from(allSizes).sort((a, b) => {
-      const orderA = sizeOrder[a] ?? 50;
-      const orderB = sizeOrder[b] ?? 50;
-      return orderA - orderB;
-    });
-
-    // Crear filas de datos
+    // Crear filas de datos - una fila por cada combinación referencia + talla + color
     const exportRows: Record<string, string | number>[] = [];
     
     refsWithDistribution.forEach(item => {
       const sizes = item.curva.split('-');
       const quantities = item.distribucion!.split('-').map(Number);
+      const colors = item.color!.split('-').map(c => c.trim());
       
-      // Crear objeto base con REF y COLOR
-      const row: Record<string, string | number> = {
-        'REF': item.referencia,
-        'COLOR': item.color || ''
-      };
-
-      // Agregar columnas de tallas con sus cantidades
-      sortedSizes.forEach(size => {
-        const sizeIndex = sizes.indexOf(size);
-        row[size] = sizeIndex !== -1 ? quantities[sizeIndex] || 0 : '';
+      // Por cada talla y cada color, crear una fila
+      sizes.forEach((size, sizeIndex) => {
+        const quantityPerSize = quantities[sizeIndex] || 0;
+        
+        colors.forEach(color => {
+          // La cantidad se divide entre los colores
+          const quantityPerColor = Math.floor(quantityPerSize / colors.length);
+          
+          if (quantityPerColor > 0) {
+            exportRows.push({
+              'StrProducto': item.referencia,
+              'IntCantidaddoc': quantityPerColor,
+              'IntvalorUnitario': 0,
+              'IntBodega': '01',
+              'StrLote': size,
+              'StrColor': color
+            });
+          }
+        });
       });
-
-      // Agregar TOT y CURVA
-      row['TOT'] = item.cantidad;
-      row['CURVA'] = item.curva;
-
-      exportRows.push(row);
     });
 
     // Crear libro de trabajo
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Distribución');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'CARGA_COL');
 
     // Generar archivo Excel
-    const fileName = `distribucion_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const fileName = `CARGA_COL_${new Date().toISOString().split('T')[0]}.xls`;
     XLSX.writeFile(workbook, fileName);
 
     toast({
       title: "Exportación exitosa",
-      description: `Se han exportado ${exportRows.length} referencias con distribución.`,
+      description: `Se han exportado ${exportRows.length} registros para carga.`,
     });
   };
 
