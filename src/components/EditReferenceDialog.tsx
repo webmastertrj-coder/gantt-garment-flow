@@ -20,6 +20,7 @@ interface Reference {
   fecha_desbloqueo: string | null;
   dias_desbloqueado: number | null;
   cantidad_colores: string | null;
+  color: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +34,8 @@ interface EditReferenceForm {
   distribucion?: string;
   cantidadColores?: string;
   ubicacion?: string;
+  color?: string;
+  color2?: string;
 }
 
 interface EditReferenceDialogProps {
@@ -41,6 +44,28 @@ interface EditReferenceDialogProps {
   onOpenChange: (open: boolean) => void;
   onReferenceUpdated: () => void;
 }
+
+const colorOptions = [
+  "Rojo", "Vino Tinto", "Verde Militar", "Negro", "Rosa", "Azul Claro", "Camuflado",
+  "Azul Medio", "Azul Oscuro", "Hielo", "Amarillo", "Café", "Gris Claro", "Gris Oscuro",
+  "Blanco", "Beige", "Kaki", "Mandarina", "Arena", "Marfil", "Verde", "Morado", "Mostaza",
+  "Crema", "Dorado", "Plateado", "Cereza", "Fucsia", "Azul Rey", "Berenjena", "Terracota",
+  "Salmon", "Verde Claro", "Naranja", "Melon", "Semilla", "Gris Medio", "Caramelo",
+  "Avellana", "Ocre", "Carmel", "Guayaba", "Agua Marina", "Verde Jade", "Coral",
+  "Verde Menta", "Ladrillo", "Magenta", "Macadamia", "Champaña", "Canela", "Verde Oliva",
+  "Bambu", "Azul Turqueza", "Tabaco", "Camel", "Mora", "Orquidea", "Pink", "Almendra",
+  "Fucsia Neon", "Naranja Neon", "Verde Neon", "Malva", "Natural", "Verde Manzana",
+  "Confite", "Esmeralda", "Lima", "Azul", "Hortensia", "Pistacho", "Celeste", "Lila",
+  "Turquesa", "Marron", "Verde Esmeralda", "Ivory", "Durazno", "Rubor", "Avena", "Taupe",
+  "Verde Limon", "Mocca", "Cocoa", "Nude", "Curcuma", "Verde Botella", "Gris",
+  "Azul Cobalto", "Vainilla", "Palo De Rosa", "Lavanda", "Chocolate", "Navy",
+  "Azul Petroleo", "Matcha", "Piton Canela", "Cebra", "Piton Almendra", "Azul Nube",
+  "Estampado", "Cacao", "Pardo", "Dirty", "Rosa Pastel", "Plomo", "Animal Print",
+  "Animal Print Chocolate", "Animal Print Kaki", "Animal Print Negro", "Animal Print Almendra",
+  "Animal Print Blanco", "Animal Print Camel", "Animal Print Ivory", "Animal Print Beige",
+  "Animal Print Avena", "Animal Print Gris", "Animal Print Marron", "Cebra Negro",
+  "Cebra Beige", "Cebra Kaki", "Cebra Marron", "Cebra Almendra"
+];
 
 const curvaOptions = [
   { value: "XS-S-M-L-XL", label: "XS-S-M-L-XL" },
@@ -65,6 +90,8 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
 
   const selectedCurva = watch("curva");
   const selectedCantidadColores = watch("cantidadColores");
+  const selectedColor = watch("color") || "";
+  const selectedColor2 = watch("color2") || "";
 
   useEffect(() => {
     const result = calculateDistribution(selectedCurva, selectedCantidadColores);
@@ -88,6 +115,15 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
       setValue("distribucion", (reference as any).distribucion || "");
       setValue("cantidadColores", reference.cantidad_colores || "");
       setValue("ubicacion", (reference as any).ubicacion || "");
+      
+      // Parse colors from the reference
+      if (reference.color) {
+        const colors = reference.color.split(", ");
+        setValue("color", colors[0] || "");
+        if (colors.length > 1) {
+          setValue("color2", colors[1] || "");
+        }
+      }
     }
   }, [reference, open, setValue]);
 
@@ -95,6 +131,14 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
     if (!reference) return;
 
     try {
+      // Combine colors if two colors are selected
+      let colorValue = null;
+      if (data.cantidadColores === "2 colores" && data.color && data.color2) {
+        colorValue = `${data.color}, ${data.color2}`;
+      } else if (data.color) {
+        colorValue = data.color;
+      }
+
       const { error } = await supabase
         .from('references')
         .update({
@@ -105,7 +149,8 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
           cantidad: data.cantidad,
           distribucion: data.distribucion || null,
           cantidad_colores: data.cantidadColores || null,
-          ubicacion: data.ubicacion || null
+          ubicacion: data.ubicacion || null,
+          color: colorValue
         })
         .eq('id', reference.id);
 
@@ -215,6 +260,68 @@ const EditReferenceDialog = ({ reference, open, onOpenChange, onReferenceUpdated
               />
             </div>
           </div>
+
+          {/* Row 2.5: Colores */}
+          {selectedCantidadColores && selectedCantidadColores === "2 colores" ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="color">Color 1</Label>
+                <Select 
+                  onValueChange={(value) => setValue("color", value)} 
+                  value={selectedColor || undefined}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un color" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {colorOptions.map((color) => (
+                      <SelectItem key={color} value={color}>
+                        {color}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="color2">Color 2</Label>
+                <Select 
+                  onValueChange={(value) => setValue("color2", value)} 
+                  value={selectedColor2 || undefined}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el segundo color" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {colorOptions.map((color) => (
+                      <SelectItem key={color} value={color}>
+                        {color}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : selectedCantidadColores ? (
+            <div className="space-y-2">
+              <Label htmlFor="color">Color</Label>
+              <Select 
+                onValueChange={(value) => setValue("color", value)} 
+                value={selectedColor || undefined}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un color" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {colorOptions.map((color) => (
+                    <SelectItem key={color} value={color}>
+                      {color}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
 
           {/* Row 3: Cantidad y Distribución */}
           <div className="grid grid-cols-2 gap-4">

@@ -208,6 +208,7 @@ const GanttChart = ({ items, launchDate }: GanttChartProps) => {
                   onPageChange={setCurrentPage}
                   className="w-full md:w-auto"
                 />
+              </div>
             )}
           </div>
         )}
