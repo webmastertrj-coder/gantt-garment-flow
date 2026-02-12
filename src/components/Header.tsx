@@ -1,4 +1,4 @@
-import { Download, BarChart3, Loader2, Calendar, LayoutGrid } from "lucide-react";
+import { Download, BarChart3, Loader2, Calendar, LayoutGrid, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -279,6 +279,15 @@ const Header = () => {
               >
                 <Calendar className="h-4 w-4" />
                 <span>Calendario</span>
+              </Button>
+              <Button
+                variant={location.pathname === '/leads' ? 'default' : 'ghost'}
+                size="sm"
+                className={`gap-2 ${location.pathname === '/leads' ? 'shadow-md primary-gradient' : 'hover:bg-accent/50'}`}
+                onClick={() => navigate('/leads')}
+              >
+                <Users className="h-4 w-4" />
+                <span>Leads</span>
               </Button>
             </div>
 

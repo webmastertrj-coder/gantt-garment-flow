@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CalendarView from "./pages/CalendarView";
 import CardView from "./pages/CardView";
+import LeadsSearch from "./pages/LeadsSearch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<CardView />} />
           <Route path="/gantt" element={<Index />} />
           <Route path="/calendar" element={<CalendarView />} />
+          <Route path="/leads" element={<LeadsSearch />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
