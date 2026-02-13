@@ -31,9 +31,7 @@ const LeadsSearch = () => {
   const [query, setQuery] = useState("");
   const [allResults, setAllResults] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
@@ -59,7 +57,6 @@ const LeadsSearch = () => {
       if (error) throw error;
 
       setAllResults(data.results || []);
-      setNextPageToken(data.nextPageToken || null);
 
       toast({
         title: `${data.total || 0} resultados encontrados`,
@@ -77,37 +74,6 @@ const LeadsSearch = () => {
     }
   };
 
-  const handleLoadMore = async () => {
-    if (!nextPageToken) return;
-
-    setIsLoadingMore(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("search-leads", {
-        body: { city: city.trim(), query: query.trim(), pageToken: nextPageToken },
-      });
-
-      if (error) throw error;
-
-      const newResults = data.results || [];
-      setAllResults((prev) => [...prev, ...newResults]);
-      setNextPageToken(data.nextPageToken || null);
-
-      toast({
-        title: `${newResults.length} resultados adicionales`,
-        description: `Total: ${allResults.length + newResults.length} leads`,
-      });
-    } catch (error: any) {
-      console.error("Load more error:", error);
-      toast({
-        title: "Error al cargar más",
-        description: error.message || "No se pudieron obtener más resultados.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
 
   const handleExport = () => {
     if (allResults.length === 0) return;
@@ -187,18 +153,6 @@ const LeadsSearch = () => {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                {nextPageToken && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={handleLoadMore}
-                    disabled={isLoadingMore}
-                  >
-                    {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    Cargar más
-                  </Button>
-                )}
                 {allResults.length > 0 && (
                   <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
                     <Download className="h-4 w-4" />
