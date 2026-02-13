@@ -237,10 +237,10 @@ const LeadsSearch = () => {
   );
 };
 
-const LeadsSearchPage = () => (
+const LeadsSearchWrapper = () => (
   <LaunchDateProvider>
     <LeadsSearch />
   </LaunchDateProvider>
 );
 
-export default LeadsSearchPage;
+export default LeadsSearchWrapper;
