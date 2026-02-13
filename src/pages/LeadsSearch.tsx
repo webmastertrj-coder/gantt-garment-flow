@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
+import CustomPagination from "@/components/ui/CustomPagination";
 
 import * as XLSX from "xlsx";
 
@@ -23,12 +24,17 @@ interface Lead {
   status: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const LeadsSearch = () => {
   const [city, setCity] = useState("");
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Lead[]>([]);
+  const [allResults, setAllResults] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   const handleSearch = async () => {
@@ -43,6 +49,7 @@ const LeadsSearch = () => {
 
     setIsLoading(true);
     setHasSearched(true);
+    setCurrentPage(1);
 
     try {
       const { data, error } = await supabase.functions.invoke("search-leads", {
@@ -51,7 +58,8 @@ const LeadsSearch = () => {
 
       if (error) throw error;
 
-      setResults(data.results || []);
+      setAllResults(data.results || []);
+      setNextPageToken(data.nextPageToken || null);
 
       toast({
         title: `${data.total || 0} resultados encontrados`,
@@ -69,10 +77,42 @@ const LeadsSearch = () => {
     }
   };
 
-  const handleExport = () => {
-    if (results.length === 0) return;
+  const handleLoadMore = async () => {
+    if (!nextPageToken) return;
 
-    const exportData = results.map((lead) => ({
+    setIsLoadingMore(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("search-leads", {
+        body: { city: city.trim(), query: query.trim(), pageToken: nextPageToken },
+      });
+
+      if (error) throw error;
+
+      const newResults = data.results || [];
+      setAllResults((prev) => [...prev, ...newResults]);
+      setNextPageToken(data.nextPageToken || null);
+
+      toast({
+        title: `${newResults.length} resultados adicionales`,
+        description: `Total: ${allResults.length + newResults.length} leads`,
+      });
+    } catch (error: any) {
+      console.error("Load more error:", error);
+      toast({
+        title: "Error al cargar más",
+        description: error.message || "No se pudieron obtener más resultados.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (allResults.length === 0) return;
+
+    const exportData = allResults.map((lead) => ({
       Nombre: lead.name,
       Dirección: lead.address,
       Teléfono: lead.phone || "",
@@ -89,8 +129,14 @@ const LeadsSearch = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Leads");
     XLSX.writeFile(wb, `leads_${city}_${query}_${new Date().toISOString().split("T")[0]}.xlsx`);
 
-    toast({ title: "Exportado", description: `${results.length} leads exportados a Excel.` });
+    toast({ title: "Exportado", description: `${allResults.length} leads exportados a Excel.` });
   };
+
+  const totalPages = Math.ceil(allResults.length / ITEMS_PER_PAGE);
+  const paginatedResults = allResults.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,99 +180,126 @@ const LeadsSearch = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-lg">{results.length} resultados</CardTitle>
-                <CardDescription>Tiendas con teléfono o sitio web</CardDescription>
+                <CardTitle className="text-lg">{allResults.length} resultados</CardTitle>
+                <CardDescription>
+                  Tiendas con teléfono o sitio web
+                  {totalPages > 1 && ` · Página ${currentPage} de ${totalPages}`}
+                </CardDescription>
               </div>
-              {results.length > 0 && (
-                <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
-                  <Download className="h-4 w-4" />
-                  Exportar Excel
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {nextPageToken && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                  >
+                    {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Cargar más
+                  </Button>
+                )}
+                {allResults.length > 0 && (
+                  <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
+                    <Download className="h-4 w-4" />
+                    Exportar Excel
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              {results.length === 0 ? (
+              {allResults.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No se encontraron resultados con teléfono o sitio web.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Dirección</TableHead>
-                        <TableHead>Teléfono</TableHead>
-                        <TableHead>Web</TableHead>
-                        <TableHead>Rating</TableHead>
-                        <TableHead>Estado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {results.map((lead, i) => (
-                        <TableRow key={i}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              {lead.name}
-                              {lead.googleMapsUrl && (
-                                <a href={lead.googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                                  <MapPin className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                                </a>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
-                            {lead.address}
-                          </TableCell>
-                          <TableCell>
-                            {lead.phone ? (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nombre</TableHead>
+                          <TableHead>Dirección</TableHead>
+                          <TableHead>Teléfono</TableHead>
+                          <TableHead>Web</TableHead>
+                          <TableHead>Rating</TableHead>
+                          <TableHead>Estado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedResults.map((lead, i) => (
+                          <TableRow key={`${currentPage}-${i}`}>
+                            <TableCell className="font-medium">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm">{lead.phone}</span>
-                                {lead.whatsappLink && (
-                                  <a href={lead.whatsappLink} target="_blank" rel="noopener noreferrer">
-                                    <MessageCircle className="h-4 w-4 text-green-600 hover:text-green-500" />
+                                {lead.name}
+                                {lead.googleMapsUrl && (
+                                  <a href={lead.googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                                    <MapPin className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
                                   </a>
                                 )}
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {lead.website ? (
-                              <a
-                                href={lead.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline text-sm flex items-center gap-1"
-                              >
-                                <Globe className="h-3.5 w-3.5" />
-                                Ver sitio
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {lead.rating ? (
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm">{lead.rating}</span>
-                                <span className="text-muted-foreground text-xs">({lead.ratingCount})</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={lead.status === "Abierto" ? "default" : "secondary"} className="text-xs">
-                              {lead.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                              {lead.address}
+                            </TableCell>
+                            <TableCell>
+                              {lead.phone ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">{lead.phone}</span>
+                                  {lead.whatsappLink && (
+                                    <a href={lead.whatsappLink} target="_blank" rel="noopener noreferrer">
+                                      <MessageCircle className="h-4 w-4 text-green-600 hover:text-green-500" />
+                                    </a>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {lead.website ? (
+                                <a
+                                  href={lead.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline text-sm flex items-center gap-1"
+                                >
+                                  <Globe className="h-3.5 w-3.5" />
+                                  Ver sitio
+                                </a>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {lead.rating ? (
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-sm">{lead.rating}</span>
+                                  <span className="text-muted-foreground text-xs">({lead.ratingCount})</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={lead.status === "Abierto" ? "default" : "secondary"} className="text-xs">
+                                {lead.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <CustomPagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  )}
                 </div>
               )}
             </CardContent>
@@ -238,4 +311,3 @@ const LeadsSearch = () => {
 };
 
 export default LeadsSearch;
-
