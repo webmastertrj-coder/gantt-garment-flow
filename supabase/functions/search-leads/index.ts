@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { city, query } = await req.json();
+    const { city, query, pageToken } = await req.json();
 
     if (!city || !query) {
       return new Response(
@@ -35,12 +35,13 @@ serve(async (req) => {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus',
+        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,nextPageToken',
       },
       body: JSON.stringify({
         textQuery: searchText,
         languageCode: 'es',
         maxResultCount: 20,
+        ...(pageToken ? { pageToken } : {}),
       }),
     });
 
@@ -76,7 +77,7 @@ serve(async (req) => {
       });
 
     return new Response(
-      JSON.stringify({ results, total: results.length }),
+      JSON.stringify({ results, total: results.length, nextPageToken: searchData.nextPageToken || null }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
