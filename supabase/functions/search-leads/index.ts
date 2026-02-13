@@ -29,36 +29,51 @@ serve(async (req) => {
     }
 
     const searchText = `${query} en ${city}`;
+    const maxLeads = 100;
+    let allPlaces: any[] = [];
+    let currentPageToken: string | undefined = pageToken || undefined;
+    let iterations = 0;
+    const maxIterations = 5; // 5 pages × 20 results = 100 max
 
-    const searchResponse = await fetch('https://places.googleapis.com/v1/places:searchText', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,nextPageToken',
-      },
-      body: JSON.stringify({
-        textQuery: searchText,
-        languageCode: 'es',
-        maxResultCount: 20,
-        ...(pageToken ? { pageToken } : {}),
-      }),
-    });
+    while (iterations < maxIterations && allPlaces.length < maxLeads) {
+      const searchResponse = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.businessStatus,nextPageToken',
+        },
+        body: JSON.stringify({
+          textQuery: searchText,
+          languageCode: 'es',
+          maxResultCount: 20,
+          ...(currentPageToken ? { pageToken: currentPageToken } : {}),
+        }),
+      });
 
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error('Google Places API error:', errorText);
-      return new Response(
-        JSON.stringify({ error: 'Error calling Google Places API', details: errorText }),
-        { status: searchResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.error('Google Places API error:', errorText);
+        // If we already have some results, return them instead of failing
+        if (allPlaces.length > 0) break;
+        return new Response(
+          JSON.stringify({ error: 'Error calling Google Places API', details: errorText }),
+          { status: searchResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const searchData = await searchResponse.json();
+      const places = searchData.places || [];
+      allPlaces = allPlaces.concat(places);
+      currentPageToken = searchData.nextPageToken || null;
+      iterations++;
+
+      if (!currentPageToken) break;
     }
 
-    const searchData = await searchResponse.json();
-    const places = searchData.places || [];
-
-    const results = places
+    const results = allPlaces
       .filter((place: any) => place.nationalPhoneNumber || place.internationalPhoneNumber || place.websiteUri)
+      .slice(0, maxLeads)
       .map((place: any) => {
         const phone = place.nationalPhoneNumber || place.internationalPhoneNumber || null;
         const cleanPhone = phone ? phone.replace(/[^0-9+]/g, '') : null;
@@ -77,7 +92,7 @@ serve(async (req) => {
       });
 
     return new Response(
-      JSON.stringify({ results, total: results.length, nextPageToken: searchData.nextPageToken || null }),
+      JSON.stringify({ results, total: results.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
