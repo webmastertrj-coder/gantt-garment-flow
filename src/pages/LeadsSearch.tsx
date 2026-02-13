@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
-import { LaunchDateProvider } from "@/contexts/LaunchDateContext";
+
 import * as XLSX from "xlsx";
 
 interface Lead {
@@ -237,10 +237,5 @@ const LeadsSearch = () => {
   );
 };
 
-const LeadsSearchWrapper = () => (
-  <LaunchDateProvider>
-    <LeadsSearch />
-  </LaunchDateProvider>
-);
+export default LeadsSearch;
 
-export default LeadsSearchWrapper;
